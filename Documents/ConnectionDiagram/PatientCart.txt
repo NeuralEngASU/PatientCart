@@ -1,0 +1,251 @@
+Patient Cart
+Software:
+	Data Recorder:
+		Oculus and Leap runtimes
+	Real-Time Machine
+		MATLAB, LabView
+		
+Unity will have a 75Hz refresh rate
+
+---------------------------------------------------
+	
+MATLAB will output the following:
+	- Real-Time neural decode (Unity and LabView)
+	- Training matrices? (LabView)
+
+Unity will output
+	- All Finger Positions (LabView and MATLAB)
+	- Oculus Video and Head movements (Hard drive)
+	
+LabView will output:
+	- Task information/setup (Unity)
+	- Data streams (Hard Drive)
+	- Decode modes (MATLAB)
+	- Training task information (MATLAB)
+	
+---------------------------------------------------
+
+MATLAB will input:
+	- Neural Data stream (TDT PO8e card)
+	- Decode modes (LabView)
+	- Training task information (LabView)
+
+Unity will input:
+	- Oculus Rift head movements (Oculus Rift)
+	- Leap Motion hand movements (Leap Motion)
+	- Decoded Finger Positions (MATLAB)
+	- Residual Limb Movements (Vicon)
+	- Target/Task information (LabView)
+	
+LabView will input:
+	- Decoded finger positions (MATLAB)
+	- Leap Motion Hand movements (Unity)
+	- Vicon arm positions (Vicon)
+	
+---------------------------------------------------
+
+LabView Task Outline
+	- Initialize and start accessory programs
+		- Via PowerShell, start MATLAB, Unity, etc...
+	- Ask patient to move to a rest position for 10 sec (record this base or rest position for 'Return to Rest' cue)
+		- Ask patient to mimic phantom perceived positions with intact hand 10 sec
+	- Start Tasks
+		- Which finger(s) or hand synergies
+		- Which finger task (spherical or torus)
+		- Save timestamps
+		- Update Unity and MATLAB
+		Trial Params/Information:
+			- Task Duration
+			- Inter-task interval
+			Sphere Task
+			- Finger(s) or synergies
+			- Hold Time
+			- Success Radius
+			- Return to Rest cue
+			Torus Task
+			- Finger
+			- Success Radius
+			- Rotation Number
+			- Target (blue sphere)
+			- Target Rotation Direction
+			- Target Speed 
+			- Cursor Position (Finger tip center)
+			- Torus Color (Red or green based on the success radius)
+			- Return to Rest cue
+	- Save Streams
+		- TimeStamps
+		- Markers (success, failure, trial start, trial information/parameters)
+		- Data Streams (Neural Decode, Finger Movements)
+	-Replay Data?
+		- Replay data by sending data to Unity? Or will a MATLAB script suffice for this?
+			
+---------------------------------------------------
+
+Task/Trial Summary
+	Patient Rest
+		Ask patient to be in a 'relaxed' or base position (Leap must be able to see all 5 fingers)
+		- 10 seconds hold time
+	Phantom Hand Mimic
+		Ask patient to mimic the perceived position of their phantom hand with their intact hand
+		- 10 seconds hold time
+	Sphere Task
+		Ask patient to move the indicated finger(s) or hand to the cued position
+		- Red colored spheres will appear for the selected finger(s) and the patient must move their fingers to that position.
+		- Spheres will become green when the patient's finger tip(s) are within some success radius of the sphere center(s).
+		- Patients will be cued to return to a rest or base position (positions gathered from the Patient Rest task.
+	Torus Task
+		Ask patient to follow a blue target sphere around a torus
+		- A red torus will appear around the selected finger.
+		- A blue target sphere will appear on the torus.
+		- Patient will move their finger to the blue target sphere.
+		- Target sphere will start moving (clockwise or counter-clockwise), and will slowly ramp up speed.
+		- Torus will change from red to green when the patient's finger is within some success radius of the blue target sphere.
+		- The blue target sphere will rotate around the torus one or more times, at a set speed (with a ramp up and a ramp down).
+		- The blue target sphere will appear at the same position each trial. The blue target sphere will also stop at that position.
+	Arm Task?
+		Ask patient to move arms from resting on the table to held in the air
+		- Perform the Sphere Task or Torus Task
+	Wrist Task?
+		Ask patient to move wrist at different angles
+		- Perform the Sphere Task or Torus Task or Arm Task?
+		
+---------------------------------------------------
+
+UDP Connection Scheme
+
+	Unity -> LabView
+		- Data: Hand positions
+		- IP: 192.198.0.20
+		- Port: 9001
+		
+	LabView -> Unity
+		- Data: Target information
+		- IP: 192.198.0.10
+		- Port: 9000
+		
+	MATLAB -> LabView
+		- Data: Neural Decode/Trained Matrix/Transfer Matrix/...
+		- IP: 127.0.0.1
+		- Port: 9011
+	
+	LabView -> MATLAB
+		- Data: Task Information, Success information, (For training)
+		- IP: 127.0.0.1
+		- Port: 9010
+		
+	Unity -> MATLAB
+		- Data: Hand Positions
+		- IP: 192.198.0.20
+		- Port: 9021
+		
+	MATLAB -> Unity
+		- Data: Hand Positions
+		- IP: 192.198.0.10
+		- Port: 9020
+		
+	Vicon -> LabView
+		- Data: Arm Positions
+		- IP: 192.198.0.20
+		- Port: 9031
+	
+	Vicon -> Unity
+		- Data: Hand Positions
+		- IP: 192.198.0.20
+		- Port: 9030
+		
+	LabView -> Vicon
+		- Data: ???
+		- IP: 192.198.0.30
+		- Port: 9032
+		
+---------------------------------------------------
+
+Unity Packet Information
+
+	LabView -> Unity
+		Single Finger Trial Example
+			Trial Start:
+			'T:0;D:0;'
+			- Trial: 0 (Sphere); Display: 0 (off);
+			
+			Trial Cue:
+			'F:0;Q:[s,i,j,k][s,i,j,k][s,i,j,k];C:R;'
+			- Finger: 0 (Thumb); Quaternion: [s,i,j,k][s,i,j,k][s,i,j,k]; Color: Red;
+			
+			Display Trial:
+			'F:0;D:1;'
+			- Display: 1 (on);
+			
+			Success Visual:
+			'F:0;C:G;'
+			- Finger: 0 (Thumb); Color: Green;
+			
+			Return to Rest Cue:
+			'F:0;Q:[s,i,j,k][s,i,j,k][s,i,j,k];C:R;'
+			- Finger: 0 (Thumb); Quaternion: [s,i,j,k][s,i,j,k][s,i,j,k]; Color: Red;
+			
+			Display Trial:
+			'D:0;'
+			- Display: 0 (off);
+			
+		Multi Finger Trial Example
+		
+			Trial Start:
+			'T:0;D:0;'
+			- Trial: 0 (Sphere); Display: 0 (off);
+		
+			Trial Cue
+			'F:012;Q:[s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k];C:RRR;'
+			- Finger: 0,1,2 (Thumb, Index, Middle); Quaternion: [s,i,j,k][s,i,j,k][s,i,j,k] (First Finger), [s,i,j,k][s,i,j,k][s,i,j,k] (Second Finger), [s,i,j,k][s,i,j,k][s,i,j,k] (Third Finger); Color: Red, Red, Red;
+			
+			Display Trial:
+			'D:1;'
+			- Display: 1 (on);
+			
+			Partial Success Visual
+			'F:01;C:GG;'
+			'F:2;C:G;'
+			
+			Return to Rest Cue
+			'F:012;Q:[s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k][s,i,j,k];C:RRR;'
+			
+			Display Trial:
+			'D:0;'
+			- Display: 0 (off);
+			
+		Torus Task Example
+		
+			Trial Start:
+			'T:1;D:0;'
+			- Trial: 1 (Torus); Display: 0 (off);
+			
+			Trial Cue:
+			'F:1;Q:[s,i,j,k][s,i,j,k][s,i,j,k];C:R;'
+			- Finger: 1 (Index); Quaternion: [s,i,j,k][s,i,j,k][s,i,j,k]; Color: Red;
+			
+			Display Trial:
+			'D:1;'
+			- Display: 1 (on);
+			
+			Success Visual:
+			'F:0;C:G;'
+			- Finger: 1 (Index); Color: Green;
+			
+			Return to Rest Cue:
+			'F:0;Q:[s,i,j,k][s,i,j,k][s,i,j,k];C:R;'
+			- Finger: 1 (Index); Quaternion: [s,i,j,k][s,i,j,k][s,i,j,k]; Color: Red;
+			
+			Display Trial:
+			'D:0;'
+			- Display: 0 (off);
+		
+	Unity -> LabView/MATLAB
+		Hand/Finger Positions
+			'F:012345;Q:[s,i,j,k][s,i,j,k][s,i,j,k];'
+		
+		
+		
+		
+		
+		
+EOF	
